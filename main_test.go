@@ -64,9 +64,20 @@ func TestInsert(t *testing.T) {
 	rope := NewRope(originalValue, testSettings)
 	newRope := rope.Insert(2, []int{-1, -2, -3})
 
-	assertValue[int](t, rope, originalValue)
-	assertValue[int](t, newRope, []int {
+	assertValue(t, rope, originalValue)
+	assertValue(t, newRope, []int {
 		0, 1, -1, -2, -3, 2, 3, 4, 5, 6, 7,
+	})
+}
+
+func TestReplace(t *testing.T) {
+	originalValue := []int{0, 1, 2, 3, 4, 5, 6, 7}
+	rope := NewRope(originalValue, testSettings)
+	newRope := rope.Replace(2, []int{-1, -2, -3, -4, -5})
+
+	assertValue(t, rope, originalValue)
+	assertValue(t, newRope, []int {
+		0, 1, -1, -2, -3, -4, -5, 7,
 	})
 }
 
@@ -75,8 +86,8 @@ func TestDelete(t *testing.T) {
 	rope := NewRope(originalValue, testSettings)
 	newRope := rope.Remove(1, 6)
 
-	assertValue[int](t, rope, originalValue)
-	assertValue[int](t, newRope, []int {
+	assertValue(t, rope, originalValue)
+	assertValue(t, newRope, []int {
 		0, 6, 7,
 	})
 }
@@ -86,8 +97,8 @@ func TestSlice(t *testing.T) {
 	rope := NewRope(originalValue, testSettings)
 	newRope := rope.Remove(1, 6)
 
-	assertValue[int](t, rope, originalValue)
-	assertValue[int](t, newRope, []int {
+	assertValue(t, rope, originalValue)
+	assertValue(t, newRope, []int {
 		0, 6, 7,
 	})
 }
@@ -102,15 +113,15 @@ func TestRebalance(t *testing.T) {
 		newRope = newRope.Insert(0, []int{0, 1, 2, 3, 4, 5, 6, 7})
 	}
 
-	assert(t, maxDepth[int](newRope) >= 10, "Max depth too low:", maxDepth[int](newRope))
+	assert(t, maxDepth(newRope) >= 10, "Max depth too low:", maxDepth(newRope))
 
 	balancedRope := NewRope(newRope.Value(), testSettings)
 	balancedRope.Rebalance()
 
-	assert(t, maxDepth[int](balancedRope) <= int(math.Log2(n*8)), "Rebalance didn't fix max depth:", maxDepth[int](balancedRope))
+	assert(t, maxDepth(balancedRope) <= int(math.Log2(n*8)), "Rebalance didn't fix max depth:", maxDepth(balancedRope))
 
-	assertValue[int](t, rope, originalValue)
-	assertSameValue[int](t, balancedRope, newRope)
+	assertValue(t, rope, originalValue)
+	assertSameValue(t, balancedRope, newRope)
 }
 
 var inputs = []int{1, 10, 100, 1000, 10000, 100000}
@@ -134,7 +145,7 @@ func BenchmarkRopeInsert(b *testing.B) {
 
 func BenchmarkRopeInsertRebalance(b *testing.B) {
 	for _, input := range inputs {
-		b.Run(fmt.Sprintf("rope_%v_insertions", input), func(b *testing.B) {
+		b.Run(fmt.Sprintf("rope_rebalanced_%v_insertions", input), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				rope := NewRope([]byte{'a', 'b', 'c', 'd'}, DefaultSettings)
 				for j := 0; j < input;j ++ {
@@ -154,7 +165,7 @@ func BenchmarkRopeInsertRebalance(b *testing.B) {
 
 func BenchmarkStringInsert(b *testing.B) {
 	for _, input := range inputs {
-		b.Run(fmt.Sprintf("rope_%v_insertions", input), func(b *testing.B) {
+		b.Run(fmt.Sprintf("string_%v_insertions", input), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				str := "abcd"
 				for j := 0; j < input;j ++ {

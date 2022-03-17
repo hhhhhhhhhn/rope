@@ -28,8 +28,8 @@ func NewRope[T any](value []T, settings *Settings) *Rope[T] {
 
 func (r *Rope[T]) adjust() {
 	if r.value != nil && r.length > r.settings.SplitLength { // It is not yet split but too long
-		r.left  = NewRope[T](r.value[:r.length / 2], r.settings)
-		r.right = NewRope[T](r.value[r.length / 2:], r.settings)
+		r.left  = NewRope(r.value[:r.length / 2], r.settings)
+		r.right = NewRope(r.value[r.length / 2:], r.settings)
 		r.value = nil // Mark as split
 		return
 	}
@@ -90,6 +90,35 @@ func (r *Rope[T]) Insert(index int, insertion []T) *Rope[T] {
 	} else {
 		changed.right = r.right.Insert(index - r.left.length, insertion)
 	}
+	return changed
+}
+
+func (r *Rope[T]) Replace(index int, replacement[]T) *Rope[T] {
+	if len(replacement) == 0 {
+		return r
+	}
+	if r.value != nil { // Rope isn't split
+		newValue := make([]T, r.length)
+		copy(newValue, r.value)
+		copy(newValue[index:], replacement)
+		changed := NewRope(newValue, r.settings) // Takes care of adjusting
+		return changed
+	}
+	// Rope is split
+	changed := &Rope[T]{settings: r.settings, length: r.length}
+
+	leftStart, leftEnd := bound(index, index + len(replacement), r.left.length)
+	leftSlice := replacement[:leftEnd - leftStart]
+	rightStart, rightEnd := bound(
+		index - r.left.length,
+		index + len(replacement) - r.left.length,
+		r.right.length,
+	)
+	rightSlice := replacement[len(leftSlice):len(leftSlice) + rightEnd - rightStart]
+
+	changed.left = r.left.Replace(leftStart, leftSlice)
+	changed.right = r.right.Replace(rightStart, rightSlice)
+	changed.adjust()
 	return changed
 }
 
